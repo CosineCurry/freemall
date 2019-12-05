@@ -54,42 +54,44 @@
             </ul>
           </div>
           <ul class="cart-item-list">
-            <li>
+            <!-- 循环图片 -->
+            <li v-for="item in cartList" :key='item.productId'>
               <div class="cart-tab-1">
                 <div class="cart-item-check">
-                  <a href="javascipt:;" class="checkbox-btn item-check-btn checked">
+                  <!-- v-on:click可简写为@click -->
+                  <a href="javascipt:;" class="checkbox-btn item-check-btn" v-bind:class="{'checked':item.checked}" @click="editCart('checked',item)">
                     <svg class="icon icon-ok">
                       <use xlink:href="#icon-ok"></use>
                     </svg>
                   </a>
                 </div>
                 <div class="cart-item-pic">
-                  <img src="/imgs/1.jpg">
+                  <img v-bind:src="'/imgs/'+item.productImage">
                 </div>
                 <div class="cart-item-title">
-                  <div class="item-name">小度人工智能音箱</div>
+                  <div class="item-name">{{item.productName}}</div>
                 </div>
               </div>
               <div class="cart-tab-2">
-                <div class="item-price">89</div>
+                <div class="item-price">{{item.productPrice}}</div>
               </div>
               <div class="cart-tab-3">
                 <div class="item-quantity">
                   <div class="select-self select-self-open">
                     <div class="select-self-area">
-                      <a class="input-sub">-</a>
-                      <span class="select-ipt">1</span>
-                      <a class="input-add">+</a>
+                      <a class="input-sub" v-on:click="editCart('minus',item)">-</a>
+                      <span class="select-ipt">{{item.productNum}}</span>
+                      <a class="input-add" v-on:click="editCart('add',item)">+</a>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="cart-tab-4">
-                <div class="item-price-total">￥89.00元</div>
+                <div class="item-price-total">{{(item.productNum*item.productPrice) | currency}}</div>
               </div>
               <div class="cart-tab-5">
                 <div class="cart-item-opration">
-                  <a href="javascript:;" class="item-edit-btn">
+                  <a href="javascript:;" class="item-edit-btn" @click="delCartConfirm(item)">
                     <svg class="icon icon-del">
                       <use xlink:href="#icon-del"></use>
                     </svg>
@@ -126,6 +128,15 @@
     </div>
   </div>
   <nav-footer></nav-footer>
+  <!-- v-bind可简写为: -->
+  <!-- v-on:close是自定义事件 -->
+  <model :mdShow="modelConfirm" v-on:close="closeModel">
+    <p slot="message">你确认要删除此条数据吗?</p>
+    <div slot="btnGroup">
+      <a class="btn btn--m" href="javascript:;">确认</a>
+      <a class="btn btn--m btn--red" href="javascript:;">关闭</a>
+    </div>
+  </model>
   </div>
 </template>
 
@@ -137,14 +148,53 @@ export default {
   name: 'cart',
   data(){
     return {
-
+      modelConfirm:false,//弹框显示属性
+      delItem:'',//准备删除的对象
+      cartList:[]
     }
   },
   components:{
     NavHeader,
     NavFooter,
-    // eslint-disable-next-line vue/no-unused-components
     Model
+  },
+  mounted(){
+    this.init();//初始化购物车列表
+  },
+  //配置过滤器
+  filters:{
+    currency(value) {
+      if(!value) return 0.00;
+      return '¥' + value.toFixed(2) + '元';
+    }
+  },
+  methods:{
+    //初始化购物车列表数据
+    init(){
+      //请求数据
+      this.axios.get("/mock/cart.json").then((response)=>{
+        let res = response.data;
+        this.cartList = res.data;
+      })
+    },
+    //修改购物车数量
+    editCart(type,item) {
+      if (type == 'add') {
+        item.productNum++;
+      }else if (type == 'minus') {
+        item.productNum--;
+      }else {
+        item.checked = !item.checked;
+      }
+    },
+    //删除数据确认弹框
+    delCartConfirm(item) {
+      this.delItem = item;
+      this.modelConfirm = true;
+    },
+    closeModel() {
+      this.modalConfirm = false;
+    }
   }
 }
 </script>

@@ -1,17 +1,18 @@
 <template>
-  <div style="display: none;">
-    <div class="md-modal modal-msg md-modal-transition md-show">
+  <div>
+    <div class="md-modal modal-msg md-modal-transition" v-bind:class="{'md-show':mdShow}">
       <div class="md-modal-inner">
         <div class="md-top">
-          <button class="md-close">关闭</button>
+          <button class="md-close" @click="closeModel">关闭</button>
         </div>
         <div class="md-content">
           <div class="confirm-tips">
-            <p slot="message">你确认要删除此条数据吗?</p>
+            <!-- 定义插槽，不起名字默认只有一个 -->
+            <slot name="message"></slot>
           </div>
           <div class="btn-wrap">
-            <a slot="btnGroup" class="btn btn--m" href="javascript:;">确认</a>
-            <a slot="btnGroup" class="btn btn--m btn--red" href="javascript:;">关闭</a>
+            <!-- 确认、取消插槽 -->
+            <slot name="btnGroup"></slot>
           </div>
         </div>
       </div>
@@ -23,8 +24,12 @@
 <script>
 export default {
   name: 'model',
-  props: {
-    
+  props: ['mdShow'],
+  methods:{
+    //自组件触发父组件事件
+    closeModel() {
+      this.$emit('close');
+    }
   }
 }
 </script>
