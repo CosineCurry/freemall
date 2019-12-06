@@ -17,7 +17,7 @@
         </div>
       </div>
     </div>
-    <div class="md-overlay"></div>
+    <div class="md-overlay" v-if="mdShow" @click="closeModel"></div>
   </div>
 </template>
 
@@ -26,7 +26,7 @@ export default {
   name: 'model',
   props: ['mdShow'],
   methods:{
-    //自组件触发父组件事件
+    //子组件触发父组件事件
     closeModel() {
       this.$emit('close');
     }

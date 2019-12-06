@@ -66,24 +66,24 @@
         <div class="addr-list-wrap">
           <div class="addr-list">
             <ul>
-              <li  class="check">
+              <li v-bind:class="{'check':checkedIndex == index}" v-for="(item,index) in addressFilter" :key='item.addressId' @click="checkedIndex = index">
                 <dl>
-                  <dt>河畔一角</dt>
-                  <dd class="address">北京市昌平区</dd>
-                  <dd class="tel">17600000000</dd>
+                  <dt>{{item.userName}}</dt>
+                  <dd class="address">{{item.streetName}}</dd>
+                  <dd class="tel">{{item.tel}}</dd>
                 </dl>
                 <div class="addr-opration addr-del">
                   <!-- 删除地址 -->
-                  <a href="javascript:;" class="addr-del-btn">
+                  <a href="javascript:;" class="addr-del-btn" @click="delAddress(item)">
                     <svg class="icon icon-del">
                       <use xlink:href="#icon-del"></use>
                     </svg>
                   </a>
                 </div>
                 <div class="addr-opration addr-set-default">
-                  <a href="javascript:;" class="addr-set-default-btn"><i>设为默认</i></a>
+                  <a href="javascript:;" class="addr-set-default-btn" v-if="!item.isDefault" @click="setDefault(item.addressId)"><i>设为默认</i></a>
                 </div>
-                <div class="addr-opration addr-default">默认地址</div>
+                <div class="addr-opration addr-default" v-if="item.isDefault">默认地址</div>
               </li>
   
               <li class="addr-new">
@@ -100,7 +100,7 @@
           </div>
   
           <div class="shipping-addr-more">
-            <a class="addr-more-btn up-down-btn open" href="javascript:;">
+            <a class="addr-more-btn up-down-btn" href="javascript:;" @click="expand" v-bind:class="{'open':limit>3}">
               查看更多
               <i class="i-up-down">
                 <i class="i-up-down-l"></i>
@@ -128,11 +128,19 @@
           </div>
         </div>
         <div class="next-btn-wrap">
-          <a class="btn btn--m btn--red" href="#">下一步</a>
+          <a class="btn btn--m btn--red" href="javascript:;" @click="next">下一步</a>
         </div>
       </div>
     </div>
   </div>
+  <model :mdShow="modelConfirm" v-on:close="modelConfirm=false">
+    <template v-slot:message>
+      <p slot="message">你确认要删除此条数据吗?</p>
+    </template>
+    <template v-slot:btnGroup>
+      <a class="btn btn--m btn--red" href="javascript:;" @click="modelConfirm=false">关闭</a>
+    </template>
+  </model>
   <nav-footer></nav-footer>
   </div>
 </template>
@@ -145,14 +153,74 @@ export default {
   name: 'addr',
   data(){
     return {
-
+      //默认展示3个
+      limit:3,
+      addressList:[],
+      //需要删除的数据
+      delItem:'',
+      checkedIndex:0,
+      modelConfirm:false
     }
   },
   components:{
     NavHeader,
     NavFooter,
-    // eslint-disable-next-line vue/no-unused-components
     Model
+  },
+  mounted() {
+    this.init();
+  },
+  computed:{
+    addressFilter() {
+      //slice方法不改变原数组
+      return this.addressList.slice(0,this.limit);
+    }
+  },
+  methods:{
+    //初始化地址数据
+    init() {
+      this.axios.get("/mock/address.json").then((response)=>{
+        let res = response.data;
+        this.addressList = res.data;
+        res.data.forEach((item,index)=>{
+          if (item.isDefault) {
+            this.checkedIndex = index;
+          }
+        })
+      })
+    },
+    //删除数据
+    delAddress(delAddress) {
+      this.delItem = delAddress;
+      this.addressList.forEach((item,index)=>{
+        if(this.delItem.addressId == item.addressId) {
+          //splice方法改变原数组
+          this.addressList.splice(index,1);
+        }
+      })
+    },
+    //展开
+    expand() {
+      if (this.limit == 3){
+        this.limit = this.addressList.length;
+      }else {
+        this.limit = 3; 
+      }
+    },
+    //设置为默认地址
+    setDefault(addressId) {
+      this.addressList.map((item)=>{
+        if(addressId == item.addressId) {
+          item.isDefault = true;
+        }else {
+          item.isDefault = false;
+        }
+      })
+    },
+    //点击下一步
+    next() {
+      this.modelConfirm = true;
+    }
   }
 }
 </script>

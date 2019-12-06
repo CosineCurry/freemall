@@ -106,8 +106,8 @@
         <div class="cart-foot-inner">
           <div class="cart-foot-l">
             <div class="item-all-check">
-              <a href="javascipt:;">
-                <span class="checkbox-btn item-check-btn check">
+              <a href="javascipt:;" @click="toggleCheckAll">
+                <span class="checkbox-btn item-check-btn" v-bind:class="{'check':checkAllFlag}">
                   <svg class="icon icon-ok">
                     <use xlink:href="#icon-ok" /></svg>
                 </span>
@@ -117,10 +117,11 @@
           </div>
           <div class="cart-foot-r">
             <div class="item-total">
-              总价: <span class="total-price">￥89.00元</span>
+              总价: <span class="total-price">{{totalPrice | currency}}</span>
             </div>
             <div class="btn-wrap">
-              <a class="btn btn--red btn--dis">结算</a>
+              <!-- btn--dis控制样式是否显示 -->
+              <a class="btn btn--red" v-bind:class="{'btn--dis':!checkedCount}" @click="checkOut">结算</a>
             </div>
           </div>
         </div>
@@ -131,11 +132,19 @@
   <!-- v-bind可简写为: -->
   <!-- v-on:close是自定义事件 -->
   <model :mdShow="modelConfirm" v-on:close="closeModel">
-    <p slot="message">你确认要删除此条数据吗?</p>
-    <div slot="btnGroup">
+    <template v-slot:message>
+      <p slot="message">你确认要删除此条数据吗?</p>
+    </template>
+    <template v-slot:btnGroup>
+      <a class="btn btn--m" href="javascript:;" @click="delCart">确认</a>
+      <a class="btn btn--m btn--red" href="javascript:;" @click="modelConfirm=false">关闭</a>
+    </template>
+    <!-- 这种写法被废弃了 -->
+    <!-- <div slot="btnGroup">
       <a class="btn btn--m" href="javascript:;">确认</a>
-      <a class="btn btn--m btn--red" href="javascript:;">关闭</a>
-    </div>
+      <! click事件里可以写表达式
+      <a class="btn btn--m btn--red" href="javascript:;" @click="modelConfirm=false">关闭</a>
+    </div> -->
   </model>
   </div>
 </template>
@@ -160,6 +169,31 @@ export default {
   },
   mounted(){
     this.init();//初始化购物车列表
+  },
+  computed:{
+    checkAllFlag() {
+      //every遍历 当数组中所有对象都返回true的时候，整体才返回true
+      return this.cartList.every((item)=>{
+        return item.checked;
+      });
+    },
+    //判断购物车是否有选中的商品
+    checkedCount() {
+      //some遍历 当数组中有对象都返回true的时候，整体返回true
+      return this.cartList.some((item)=>{
+        return item.checked;
+      });
+    },
+    //计算总金额
+    totalPrice() {
+      let money = 0;
+      this.cartList.forEach((item)=>{
+        if(item.checked) {
+          money += item.productNum * item.productPrice;
+        }
+      });
+      return money;
+    }
   },
   //配置过滤器
   filters:{
@@ -193,7 +227,33 @@ export default {
       this.modelConfirm = true;
     },
     closeModel() {
-      this.modalConfirm = false;
+      this.modelConfirm = false;
+    },
+    //删除购物车数据
+    delCart() {
+      let delItem = this.delItem;
+      this.cartList.forEach((item,index)=>{
+        if(delItem.productId == item.productId) {
+          this.cartList.splice(index,1);
+          this.modelConfirm = false;
+        }
+      })
+    },
+    //全选和反选
+    toggleCheckAll() {
+      let flag = !this.checkAllFlag;
+      this.cartList.forEach((item)=>{
+        item.checked = flag;
+      })
+    },
+    //点击结算按钮 跳转页面
+    checkOut() {
+      if(this.checkedCount) {
+        //路由跳转
+        this.$router.push({
+          path:'/address'
+        })
+      }
     }
   }
 }
